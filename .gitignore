@@ -1,0 +1,8 @@
+.pids/
+.pants.d/
+.vscode/
+.local/
+dist/
+__pycache__
+
+applications/awscli_cmd_builder/aws.py
