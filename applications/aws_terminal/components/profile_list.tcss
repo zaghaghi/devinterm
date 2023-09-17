@@ -1,0 +1,15 @@
+#search {
+    background: $panel;
+    dock: left;
+    align: center top;
+    margin: 0 0;
+    border: round rgb(255,255,255) 30%;
+    width: 60%;
+    max-width: 80;
+}
+
+#search > .input--cursor {
+    background: $panel;
+    color: rgb(0,0,0) 0%;
+    text-style: u;
+}
