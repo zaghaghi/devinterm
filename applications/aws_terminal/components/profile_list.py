@@ -1,5 +1,3 @@
-import asyncio
-
 import boto3
 from textual import work
 from textual.app import ComposeResult
@@ -28,7 +26,7 @@ PROFILE_LIST_INLINE_CSS = """
         background: $panel;
         border: none;
     }
-    
+
     #profiles > .option-list--option-highlighted {
         background: $secondary;
     }
@@ -56,6 +54,7 @@ PROFILE_LIST_INLINE_CSS = """
         scrollbar-color-active: rgb(255,255,255) 30%;
         scrollbar-size-vertical: 1;
         max-height: 8;
+        border-title-align: center;
     }
 
     #select-container {
@@ -81,7 +80,8 @@ class ProfileList(Static):
         input = Input(placeholder="Search", id="search")
         with Center(id="profiles-center-container"):
             yield input
-            with VerticalScroll(id="profiles-container"):
+            with VerticalScroll(id="profiles-container") as container:
+                container.border_title = "Available Profiles"
                 yield OptionList(id="profiles")
 
     def on_mount(self) -> None:

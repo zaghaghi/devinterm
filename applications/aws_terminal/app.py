@@ -1,9 +1,5 @@
 from textual import on
-from textual.app import App, ComposeResult
-from textual.containers import VerticalScroll
-from textual.reactive import reactive
-from textual.widgets import Input, OptionList
-from textual.widgets.option_list import Option
+from textual.app import App
 
 from .components import ProfileList
 from .screens import MainScreen, ProfileScreen
@@ -11,6 +7,7 @@ from .screens import MainScreen, ProfileScreen
 
 class AWSConsole(App):
     CSS_PATH = "app.tcss"
+    TITLE = "AWS Terminal Console"
 
     def on_mount(self) -> None:
         self.push_screen(ProfileScreen())

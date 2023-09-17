@@ -36,7 +36,6 @@ class AWSCommandBuilderApp(App):
 
     @work(exclusive=True)
     async def show_completer_result(self, word: str) -> None:
-        completer_word = f"aws {word}"
         options = ["pishpil", "kishpil", str(self.input.cursor_width)]
         # options = self.completer.complete(completer_word)
         # if not options and completer_word.endswith(" "):

@@ -36,6 +36,9 @@ resolve = "python-default"
 [black]
 args = ["-l 120"]
 
+[flake8]
+args = ["--max-line-length=120"]
+
 [isort]
 args = ["-l 120", "--profile black"]
 
