@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "6de2522448238750d6928d769e6b1f3037d0fe038caeec298f353dd3fda01b05"
+            "sha256": "39c69252139bf1c5875841efc85a56b1d589f38916d0e4ff8fc214c6e78e9d5f"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -24,6 +24,15 @@
             "index": "pypi",
             "markers": "python_version >= '3.7'",
             "version": "==1.29.49"
+        },
+        "boto3": {
+            "hashes": [
+                "sha256:519639859a3c829ccf7073a58b3716cb26cb5906e306fe63eb4beab68bf9bfab",
+                "sha256:c9fad1b01a1d7e7bd51150b3175b4c32b79d699ce94708082611f59fde2e097a"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.7'",
+            "version": "==1.28.49"
         },
         "botocore": {
             "hashes": [
@@ -213,12 +222,12 @@
         },
         "textual": {
             "hashes": [
-                "sha256:0f88ef7adbe28507b1bd402a14fa7a4268040eae70f5b85101c81357755d2d83",
-                "sha256:70869326c47b2118304e24a275548049a87ebab4628c853261b8e7dd9c2d3148"
+                "sha256:0498894da7f4af5cac62d99e412e9d813e784f7a87834dd29aa656d31d068760",
+                "sha256:bbedebd9bf245523dc07d1a883ce4178133cfe1d3c3e030a2224359128f177b7"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.7' and python_version < '4.0'",
-            "version": "==0.37.0"
+            "version": "==0.37.1"
         },
         "typing-extensions": {
             "hashes": [
@@ -743,12 +752,12 @@
         },
         "textual": {
             "hashes": [
-                "sha256:0f88ef7adbe28507b1bd402a14fa7a4268040eae70f5b85101c81357755d2d83",
-                "sha256:70869326c47b2118304e24a275548049a87ebab4628c853261b8e7dd9c2d3148"
+                "sha256:0498894da7f4af5cac62d99e412e9d813e784f7a87834dd29aa656d31d068760",
+                "sha256:bbedebd9bf245523dc07d1a883ce4178133cfe1d3c3e030a2224359128f177b7"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.7' and python_version < '4.0'",
-            "version": "==0.37.0"
+            "version": "==0.37.1"
         },
         "textual-dev": {
             "hashes": [
