@@ -8,7 +8,7 @@ from textual.widget import Widget
 class FooterSession(Widget):
     profile_name: reactive[str] = reactive("")
     region_name: reactive[str] = reactive("")
-    service_name: reactive[str] = reactive("S3")
+    service_name: reactive[str] = reactive("")
     DEFAULT_CSS = """
         FooterSession {
             dock: left;
@@ -20,7 +20,10 @@ class FooterSession(Widget):
     """
 
     def render(self) -> RenderResult:
-        return Text(f"{self.profile_name} 〉{self.region_name} 〉{self.service_name}", no_wrap=True, overflow="ellipsis")
+        session_line = f"{self.profile_name} 〉{self.region_name}"
+        if self.service_name:
+            session_line += f" 〉{self.service_name}"
+        return Text(session_line, no_wrap=True, overflow="ellipsis")
 
 
 class FooterInfo(Widget):
