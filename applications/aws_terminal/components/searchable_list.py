@@ -3,6 +3,7 @@ from typing import Callable
 
 from textual import on, work
 from textual.app import ComposeResult
+from textual.events import DescendantFocus, Focus
 from textual.message import Message
 from textual.reactive import reactive
 from textual.widgets import Input, Label, ListItem, ListView, Static
@@ -51,7 +52,7 @@ SEARCHABLE_LIST_INLINE_CSS = """
 """
 
 
-class SearchableList(Static):
+class SearchableList(Static, can_focus_children=True):
     DEFAULT_CSS = SEARCHABLE_LIST_INLINE_CSS
 
     footer: reactive[str] = reactive("")
@@ -60,12 +61,17 @@ class SearchableList(Static):
     class ItemDatum:
         title: str
         id: str
-        userr_data: dict | None = None
+        user_data: dict | None = None
 
     class Selected(Message):
-        def __init__(self, item: "SearchableList.ItemDatum") -> None:
+        def __init__(self, list: "SearchableList", item: "SearchableList.ItemDatum") -> None:
             self.item = item
+            self.list = list
             super().__init__()
+
+        @property
+        def control(self) -> "SearchableList":
+            return self.list
 
     def __init__(self, search_placeholder: str, item_factory: Callable[[], list[ItemDatum]], **kwargs) -> None:
         super().__init__(**kwargs)
@@ -99,7 +105,7 @@ class SearchableList(Static):
     def handle_item_selected(self, message: ListView.Selected) -> None:
         selected_item = self._items_index.get(message.item.id)
         if selected_item:
-            self.post_message(self.Selected(selected_item))
+            self.post_message(self.Selected(self, selected_item))
 
     @work(exclusive=True)
     async def compose_items(self) -> None:

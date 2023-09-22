@@ -3,36 +3,30 @@ from rich.text import Text
 from textual.app import ComposeResult, RenderResult
 from textual.reactive import reactive
 from textual.widget import Widget
+from textual.widgets import Static
 
 
-class FooterSession(Widget):
+class FooterSession(Static):
     profile_name: reactive[str] = reactive("")
     region_name: reactive[str] = reactive("")
     service_name: reactive[str] = reactive("")
     DEFAULT_CSS = """
         FooterSession {
-            dock: left;
             padding: 0 1;
-            width: 50%;
-            content-align: left middle;
         }
 
     """
 
     def render(self) -> RenderResult:
-        session_line = f"{self.profile_name} 〉{self.region_name}"
-        if self.service_name:
-            session_line += f" 〉{self.service_name}"
+        available_items = [item for item in [self.profile_name, self.region_name, self.service_name] if item]
+        session_line = " 〉".join(available_items)
         return Text(session_line, no_wrap=True, overflow="ellipsis")
 
 
 class FooterInfo(Widget):
     DEFAULT_CSS = """
         FooterInfo {
-            dock: right;
             padding: 0 1;
-            width: 50%;
-            content-align: right middle;
         }
     """
 
@@ -48,13 +42,20 @@ class Footer(Widget):
             width: 100%;
             background: $secondary-background;
         }
+        Footer > FooterSession {
+            dock: left;
+            width: 50%;
+            content-align: left middle;
+        }
+        Footer > FooterInfo {
+            dock: right;
+            width: 50%;
+            content-align: right middle;
+        }
     """
 
     def compose(self) -> ComposeResult:
-        yield FooterInfo()
-        yield FooterSession()
-
-    def set_session_info(self, profile_name: str, region_name: str, service_name: str) -> None:
-        self.query_one(FooterSession).profile_name = profile_name
-        self.query_one(FooterSession).region_name = region_name
-        self.query_one(FooterSession).service_name = service_name
+        self.info = FooterInfo()
+        self.session = FooterSession()
+        yield self.info
+        yield self.session
