@@ -1,12 +1,29 @@
 import boto3
+from rich.console import RenderableType
 from textual import on
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Center, Horizontal
 from textual.screen import Screen
-from textual.widgets import ContentSwitcher, Header, TabbedContent, TabPane
+from textual.widgets import ContentSwitcher, Header, Static, TabbedContent, TabPane
 
 from ..components import Footer, Logo, SearchableList
-from ..components.footer import FooterSession
+
+
+class Help(Static):
+    def __init__(self, parent: "MainScreen", **kwargs) -> None:
+        self._parent_widget = parent
+        super().__init__(**kwargs)
+
+    def render(self) -> RenderableType:
+        return (
+            "Select profile, region and service, "
+            "then click [@click=open_service()]here[/] or press [Ctrl+G] "
+            "to open service."
+        )
+
+    def action_open_service(self):
+        self._parent_widget.action_open_service()
 
 
 class MainScreen(Screen):
@@ -33,7 +50,16 @@ class MainScreen(Screen):
             height: 1;
             # content-align: center middle;
         }
+
+        #help {
+            width: 90;
+            color: $text 40%;
+            text-align: center;
+        }
     """
+    BINDINGS = [
+        Binding("ctrl+g", "open_service", "Open Service", show=True),
+    ]
 
     def __init__(
         self,
@@ -49,6 +75,7 @@ class MainScreen(Screen):
             with TabPane("Welcome", id="welcome"):
                 with Center(classes="main-screen-container"):
                     yield Logo()
+                    yield Help(self, id="help")
                     with Horizontal(classes="main-screen-lists-container"):
                         yield SearchableList(
                             "Profile",
@@ -65,8 +92,6 @@ class MainScreen(Screen):
                             id="service-list",
                             classes="main-screen-list-select",
                         )
-                    self._footer_session = FooterSession(id="current-selection-session")
-                    yield self._footer_session
         self._footer = Footer()
         yield self._footer
 
@@ -91,12 +116,17 @@ class MainScreen(Screen):
         list_id = message.control.id
         if list_id == "profile-list":
             self._footer.session.profile_name = message.item.title
-            self._footer_session.profile_name = message.item.title
         elif list_id == "region-list":
             self._footer.session.region_name = message.item.title
-            self._footer_session.region_name = message.item.title
         elif list_id == "service-list":
             self._footer.session.service_name = message.item.title
-            self._footer_session.service_name = message.item.title
         else:
             ...
+
+    def action_open_service(self) -> None:
+        if all(
+            [self._footer.session.service_name, self._footer.session.region_name, self._footer.session.profile_name]
+        ):
+            exit(0)
+        else:
+            self.notify("Select profile, region and service first.")
