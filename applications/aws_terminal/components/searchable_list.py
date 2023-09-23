@@ -24,7 +24,7 @@ SEARCHABLE_LIST_INLINE_CSS = """
         scrollbar-background-active: $panel;
         scrollbar-color: rgb(255,255,255) 50%;
         scrollbar-color-hover: rgb(255,255,255) 70%;
-        scrollbar-color-active: rgb(255,255,255) 30%;
+        scrollbar-color-active: $secondary 70%;
         scrollbar-size-vertical: 1;
         max-height: 8;
         border-title-align: center;

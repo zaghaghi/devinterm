@@ -1,11 +1,11 @@
 Screen {
     background: $panel;
-        scrollbar-background: $panel;
-        scrollbar-background-hover: $panel;
-        scrollbar-background-active: $panel;
-        scrollbar-color: rgb(255,255,255) 50%;
-        scrollbar-color-hover: rgb(255,255,255) 70%;
-        scrollbar-color-active: rgb(255,255,255) 30%;
-        scrollbar-size-vertical: 1;
+    scrollbar-background: $panel;
+    scrollbar-background-hover: $panel;
+    scrollbar-background-active: $panel;
+    scrollbar-color: rgb(255,255,255) 50%;
+    scrollbar-color-hover: rgb(255,255,255) 70%;
+    scrollbar-color-active: $secondary 70%;
+    scrollbar-size-vertical: 1;
 }
 

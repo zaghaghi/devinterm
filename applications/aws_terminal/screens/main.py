@@ -4,10 +4,12 @@ from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Center, Horizontal
+from textual.css.query import NoMatches
 from textual.screen import Screen
 from textual.widgets import ContentSwitcher, Header, Static, TabbedContent, TabPane
 
 from ..components import Footer, Logo, SearchableList
+from ..strings import AWS_REGION_MAP, AWS_SERVICE_MAP
 
 
 class Help(Static):
@@ -99,9 +101,10 @@ class MainScreen(Screen):
         self._content_switcher = self.tabbed_content.get_child_by_type(ContentSwitcher)
 
     def get_available_regions(self) -> list[SearchableList.ItemDatum]:
-        session = boto3.Session()
-        regions = session.get_available_regions("cloudformation")
-        return [SearchableList.ItemDatum(title=region, id=region) for region in regions]
+        return [
+            SearchableList.ItemDatum(title=f"{region} ({data.get('name')})", id=region)
+            for region, data in AWS_REGION_MAP.items()
+        ]
 
     def get_available_profiles(self) -> list[SearchableList.ItemDatum]:
         session = boto3.Session()
@@ -109,24 +112,43 @@ class MainScreen(Screen):
         return [SearchableList.ItemDatum(title=profile, id=profile) for profile in profiles]
 
     def get_available_services(self) -> list[SearchableList.ItemDatum]:
-        return [SearchableList.ItemDatum(title="CloudFormation", id="cloudformation", user_data={})]
+        return [
+            SearchableList.ItemDatum(title=data.get("name", service), id=service, user_data=data)
+            for service, data in AWS_SERVICE_MAP.items()
+        ]
 
     @on(SearchableList.Selected)
     def handle_list_item_selected(self, message: SearchableList.Selected) -> None:
         list_id = message.control.id
         if list_id == "profile-list":
-            self._footer.session.profile_name = message.item.title
+            self._footer.session.profile_name = message.item.id
         elif list_id == "region-list":
-            self._footer.session.region_name = message.item.title
+            self._footer.session.region_name = message.item.id
         elif list_id == "service-list":
-            self._footer.session.service_name = message.item.title
+            self._footer.session.service_name = message.item.id
         else:
             ...
 
     def action_open_service(self) -> None:
-        if all(
-            [self._footer.session.service_name, self._footer.session.region_name, self._footer.session.profile_name]
-        ):
-            exit(0)
+        service_parts = [
+            self._footer.session.service_name,
+            self._footer.session.region_name,
+            self._footer.session.profile_name,
+        ]
+        if all(service_parts):
+            service_pane = self.get_or_create_service_pane(service_parts)
+
         else:
             self.notify("Select profile, region and service first.")
+
+    def get_or_create_service_pane(self, service_parts: list[str]) -> TabPane:
+        service_pane_id = "_".join(service_parts)
+        try:
+            service_pane = self._content_switcher.get_child_by_id(service_pane_id, TabPane)
+        except NoMatches:
+            service_pane = TabPane(service_parts[0].title(), id=service_pane_id)
+            self.tabbed_content.add_pane(service_pane)
+
+        self.tabbed_content.active = service_pane_id
+        self.tabbed_content.show_tab(service_pane_id)
+        return service_pane

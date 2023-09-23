@@ -1,20 +1,18 @@
-from textual import on
 from textual.app import App
 
-from .components import ProfileList
 from .screens import MainScreen
 
 
-class AWSConsole(App):
+class CloudManagementConsole(App):
     CSS_PATH = "app.tcss"
-    TITLE = "AWS In Term"
+    TITLE = "Cloud Management In Terminal"
 
     def on_mount(self) -> None:
         self.push_screen(MainScreen())
 
 
 def main():
-    app = AWSConsole()
+    app = CloudManagementConsole()
     app.run()
 
 
