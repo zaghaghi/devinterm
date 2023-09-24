@@ -3,10 +3,10 @@ from typing import Any
 import boto3
 from botocore.exceptions import SSOTokenLoadError, UnauthorizedSSOTokenError
 from rich.text import Text
-from textual import work
+from textual import on, work
 from textual.app import ComposeResult
 from textual.containers import Horizontal, VerticalScroll
-from textual.widgets import Label, OptionList, Static
+from textual.widgets import Label, OptionList, Pretty, Static
 from textual.widgets.option_list import Option, Separator
 
 from ..models import ServicePath
@@ -14,6 +14,7 @@ from ..models import ServicePath
 
 class StackOption(Option):
     def __init__(self, stack_summary: dict[str, Any], id: str | None = None, disabled: bool = False) -> None:
+        self.stack_summary = stack_summary
         stack_name = stack_summary.get("StackName", "NoName!")
         stack_status = stack_summary.get("StackStatus", "NO_STATUS")
         status_status_color = (
@@ -28,6 +29,18 @@ class StackOption(Option):
             overflow="ellipsis",
         )
         super().__init__(prompt, id, disabled)
+
+    @property
+    def stack_name(self) -> str:
+        return self.stack_summary.get("StackName", "NoName!")
+
+    @property
+    def stack_status(self) -> str:
+        return self.stack_summary.get("StackStatus", "NO_STATUS")
+
+    @property
+    def stack_id(self) -> str | None:
+        return self.stack_summary.get("StackId")
 
 
 class CloudFormation(Static):
@@ -70,7 +83,7 @@ class CloudFormation(Static):
                 self._option_list = OptionList(id="stack-list")
                 yield self._option_list
             with VerticalScroll(classes="stack-details-container"):
-                yield Label("Stack Details")
+                yield Pretty({})
 
     def on_mount(self) -> None:
         # self.mock_list_stacks()
@@ -104,6 +117,15 @@ class CloudFormation(Static):
         }
         self.update_option_list(example_response.get("StackSummaries", []))
 
+    @work(exclusive=True, thread=True)
+    def describe_stacks(self, stack_id: str) -> dict[str, Any]:
+        try:
+            response = self._client.describe_stacks(StackName=stack_id)
+            return response
+        except Exception:
+            self.notify("Can't get stack information", severity="error")
+            return {}
+
     def update_option_list(self, stack_summaries: dict[str, Any]) -> None:
         self._option_list.clear_options()
         options = []
@@ -115,3 +137,10 @@ class CloudFormation(Static):
             options.append(StackOption(stack_summary))
 
         self._option_list.add_options(options)
+
+    @on(OptionList.OptionSelected)
+    async def handle_selected_stack(self, message: OptionList.OptionSelected) -> None:
+        if not isinstance(message.option, StackOption):
+            return
+        stack_desc = await self.describe_stacks(message.option.stack_id).wait()
+        self.query_one(Pretty).update(stack_desc)
