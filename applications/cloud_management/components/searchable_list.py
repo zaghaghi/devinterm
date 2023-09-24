@@ -66,7 +66,6 @@ class SearchableList(Static, can_focus_children=True):
     DEFAULT_CSS = SEARCHABLE_LIST_INLINE_CSS
 
     footer: reactive[str] = reactive("")
-    # 	:check_mark_button: 	:check_box_with_check: :cross_mark_button:
 
     @dataclass
     class ItemDatum:
@@ -133,9 +132,13 @@ class SearchableList(Static, can_focus_children=True):
 
     @work(exclusive=True)
     async def compose_items(self) -> None:
-        self._items = self._item_factory()
+        self._items = await self.get_items_from_factory().wait()
         self._items_index = {item.id: item for item in self._items}
         self.update_items(self._items)
+
+    @work(thread=True)
+    def get_items_from_factory(self) -> list["SearchableList.ItemDatum"]:
+        return self._item_factory()
 
     async def on_input_changed(self, message: Input.Changed) -> None:
         """A coroutine to handle a text changed message."""
