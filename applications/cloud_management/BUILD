@@ -1,6 +1,11 @@
-python_sources(
-    name="sources", sources=["*.py"], dependencies=["3rdparty/python:default#textual", "3rdparty/python:default#boto3"]
-)
 resources(name="styles", sources=["*.tcss"])
 
-pex_binary(name="aws-terminal", dependencies=[":sources", ":styles"], entry_point="aws_terminal.app:main")
+python_sources(
+    name="sources",
+    sources=["**/*.py"],
+    dependencies=["3rdparty/python:default#textual", "3rdparty/python:default#boto3", ":styles"],
+)
+
+pex_binary(
+    name="cloud-management-terminal", dependencies=[":sources", ":styles"], entry_point="cloud_management.app:main"
+)

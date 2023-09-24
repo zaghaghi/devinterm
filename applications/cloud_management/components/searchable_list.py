@@ -3,7 +3,6 @@ from typing import Callable
 
 from textual import on, work
 from textual.app import ComposeResult
-from textual.events import DescendantFocus, Focus
 from textual.message import Message
 from textual.reactive import reactive
 from textual.widgets import Input, Label, ListItem, ListView, Static
@@ -35,12 +34,20 @@ SEARCHABLE_LIST_INLINE_CSS = """
         width: 100%;
     }
 
-    #items-list > .list-view--item-highlighted {
+    #items-list > .list-view--item-selected {
         background: $secondary;
     }
 
-    #items-list > .list-view--item-not-highlighted {
+    #items-list > .list-view--item-not-selected {
         background: $panel;
+    }
+
+    #items-list > .list-view--item-highlighted {
+        background: $secondary-background;
+    }
+
+    #items-list > .list-view--item-highlighted.list-view--item-selected {
+        background: $secondary;
     }
 
     Label.footer {
@@ -80,9 +87,7 @@ class SearchableList(Static, can_focus_children=True):
 
     def compose(self) -> ComposeResult:
         self._search_input = Input(placeholder=self._search_placeholder, id="search")
-        self._list_view = ListView(
-            id="items-list",
-        )
+        self._list_view = ListView(id="items-list")
         yield self._search_input
         yield self._list_view
         self._footer_label = Label(self.footer, classes="footer")
@@ -93,19 +98,30 @@ class SearchableList(Static, can_focus_children=True):
 
     @on(ListView.Highlighted)
     def handle_item_highlighted(self, message: ListView.Highlighted) -> None:
+        self.fix_highlighted_classes(message)
+
+    @on(ListView.Selected)
+    def handle_item_selected(self, message: ListView.Selected) -> None:
+        self.fix_selected_classes(message)
+        selected_item = self._items_index.get(message.item.id)
+        if selected_item:
+            self.post_message(self.Selected(self, selected_item))
+
+    def fix_selected_classes(self, message: ListView.Selected) -> None:
+        if not message.item:
+            return
+        for item in message.list_view.children:
+            item.remove_class("list-view--item-selected")
+            item.add_class("list-view--item-not-selected")
+        message.item.remove_class("list-view--item-not-selected")
+        message.item.add_class("list-view--item-selected")
+
+    def fix_highlighted_classes(self, message: ListView.Highlighted) -> None:
         if not message.item:
             return
         for item in message.list_view.children:
             item.remove_class("list-view--item-highlighted")
-            item.add_class("list-view--item-not-highlighted")
-        message.item.remove_class("list-view--item-not-highlighted")
         message.item.add_class("list-view--item-highlighted")
-
-    @on(ListView.Selected)
-    def handle_item_selected(self, message: ListView.Selected) -> None:
-        selected_item = self._items_index.get(message.item.id)
-        if selected_item:
-            self.post_message(self.Selected(self, selected_item))
 
     @work(exclusive=True)
     async def compose_items(self) -> None:
@@ -131,7 +147,7 @@ class SearchableList(Static, can_focus_children=True):
         for item in items:
             self._list_view.append(
                 ListItem(
-                    Label(item.title, classes="list-view-item"), id=item.id, classes="list-view--item-not-highlighted"
+                    Label(item.title, classes="list-view-item"), id=item.id, classes="list-view--item-not-selected"
                 )
             )
         self._footer_label.update(f"{len(items)}/{len(self._items)}")
