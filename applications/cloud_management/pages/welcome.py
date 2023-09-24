@@ -1,4 +1,5 @@
 import boto3
+from botocore.exceptions import BotoCoreError
 from rich.console import RenderableType
 from textual import on
 from textual.app import ComposeResult
@@ -103,7 +104,20 @@ class Welcome(Static):
     def get_available_profiles(self) -> list[SearchableList.ItemDatum]:
         session = boto3.Session()
         profiles = session.available_profiles
-        return [SearchableList.ItemDatum(title=profile, id=profile) for profile in profiles]
+        items = []
+        for profile in profiles:
+            session = boto3.Session(profile_name=profile)
+            disabled = False
+            response = {}
+            try:
+                sts = session.client("sts")
+                response = sts.get_caller_identity()
+            except BotoCoreError:
+                disabled = True
+
+            items.append(SearchableList.ItemDatum(title=profile, id=profile, disabled=disabled, user_data=response))
+
+        return items
 
     def get_available_services(self) -> list[SearchableList.ItemDatum]:
         return [

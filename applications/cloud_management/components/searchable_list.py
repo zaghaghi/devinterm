@@ -45,6 +45,9 @@ SEARCHABLE_LIST_INLINE_CSS = """
     #items-list > .list-view--item-highlighted {
         background: $secondary-background;
     }
+    #items-list > .list-view--item-disabled {
+        text-style: dim;
+    }
 
     #items-list > .list-view--item-highlighted.list-view--item-selected {
         background: $secondary;
@@ -63,11 +66,13 @@ class SearchableList(Static, can_focus_children=True):
     DEFAULT_CSS = SEARCHABLE_LIST_INLINE_CSS
 
     footer: reactive[str] = reactive("")
+    # 	:check_mark_button: 	:check_box_with_check: :cross_mark_button:
 
     @dataclass
     class ItemDatum:
         title: str
         id: str
+        disabled: bool = False
         user_data: dict | None = None
 
     class Selected(Message):
@@ -104,6 +109,9 @@ class SearchableList(Static, can_focus_children=True):
     def handle_item_selected(self, message: ListView.Selected) -> None:
         self.fix_selected_classes(message)
         selected_item = self._items_index.get(message.item.id)
+        if selected_item.disabled:
+            self.notify("This profile does not have a valid token.")
+            return
         if selected_item:
             self.post_message(self.Selected(self, selected_item))
 
@@ -145,9 +153,12 @@ class SearchableList(Static, can_focus_children=True):
     def update_items(self, items: list["SearchableList.ItemDatum"]) -> None:
         self._list_view.clear()
         for item in items:
+            disabled_class = " list-view--item-disabled" if item.disabled else ""
             self._list_view.append(
                 ListItem(
-                    Label(item.title, classes="list-view-item"), id=item.id, classes="list-view--item-not-selected"
+                    Label(item.title, classes="list-view-item"),
+                    id=item.id,
+                    classes="list-view--item-not-selected" + disabled_class,
                 )
             )
         self._footer_label.update(f"{len(items)}/{len(self._items)}")
