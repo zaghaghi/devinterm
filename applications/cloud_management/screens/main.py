@@ -26,7 +26,7 @@ class MainScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        with TabbedContent(initial="welcome") as self.tabbed_content:
+        with TabbedContent(initial=self.WELCOME_PAGE_ID) as self.tabbed_content:
             with TabPane("Welcome", id=self.WELCOME_PAGE_ID):
                 yield Welcome()
         self._footer = Footer()

@@ -6,7 +6,7 @@ from rich.text import Text
 from textual import on, work
 from textual.app import ComposeResult
 from textual.containers import Horizontal, VerticalScroll
-from textual.widgets import Label, OptionList, Pretty, Static
+from textual.widgets import DataTable, Label, OptionList, Pretty, Static, TabbedContent, TabPane
 from textual.widgets.option_list import Option, Separator
 
 from ..models import ServicePath
@@ -64,8 +64,15 @@ class CloudFormation(Static):
         .stack-details-container {
             border: round rgb(255,255,255) 30%;
             width: 4fr;
-            # background: red;
             margin: 0 0;
+        }
+        # DataTable {
+        #     background: red;
+        #     height: 100%;
+        #     width: 100%;
+        # }
+        TabPane.stack-tab-pane {
+            height: 1fr;
         }
     """
 
@@ -83,7 +90,29 @@ class CloudFormation(Static):
                 self._option_list = OptionList(id="stack-list")
                 yield self._option_list
             with VerticalScroll(classes="stack-details-container"):
-                yield Pretty({})
+                with TabbedContent() as self.tabbed_content:
+                    with TabPane("Properties", id="properties", classes="stack-tab-pane"):
+                        self.properties_table = DataTable(name="properties", id="properties-table")
+                        self.properties_table.add_columns("Name", "Value")
+                        yield self.properties_table
+                    with TabPane("Parameters", id="parameters", classes="stack-tab-pane"):
+                        self.parameters_table = DataTable(name="parameters", id="parameters-table")
+                        self.parameters_table.add_columns("Key", "Value", "Resolved Valued")
+                        yield self.parameters_table
+                    with TabPane("Outputs", id="outputs", classes="stack-tab-pane"):
+                        self.outputs_table = DataTable(name="Outputs", id="outputs-table")
+                        self.outputs_table.add_columns("Key", "Value", "Description", "Export Name")
+                        yield self.outputs_table
+                    with TabPane("Tags", id="tags", classes="stack-tab-pane"):
+                        self.tags_table = DataTable(name="Tags", id="tags-table")
+                        self.tags_table.add_columns("Key", "Value")
+                        yield self.tags_table
+                    with TabPane("Events", id="events", classes="stack-tab-pane"):
+                        yield Label("Events")
+                    with TabPane("Resources", id="resources", classes="stack-tab-pane"):
+                        yield Label("Resources")
+                    with TabPane("Response", id="response", classes="stack-tab-pane"):
+                        yield Pretty({})
 
     def on_mount(self) -> None:
         # self.mock_list_stacks()
@@ -143,4 +172,32 @@ class CloudFormation(Static):
         if not isinstance(message.option, StackOption):
             return
         stack_desc = await self.describe_stacks(message.option.stack_id).wait()
-        self.query_one(Pretty).update(stack_desc)
+        self.update_stack_details(stack_desc)
+
+    def update_stack_details(self, stacks_description: dict[str, Any]) -> None:
+        self.properties_table.clear()
+        self.parameters_table.clear()
+        self.outputs_table.clear()
+        self.tags_table.clear()
+
+        stacks = stacks_description.get("Stacks")
+        if not stacks:
+            return
+        stack = stacks[0]
+
+        fields = ["StackName", "CreationTime", "LastUpdatedTime", "StackStatus", "RoleARN"]
+        self.properties_table.add_rows((field, stack.get(field, "")) for field in fields)
+
+        fields = ["ParameterKey", "ParameterValue", "ResolvedValue"]
+        for parameter in stack.get("Parameters", []):
+            self.parameters_table.add_row(*(parameter.get(field, "") for field in fields))
+
+        fields = ["OutputKey", "OutputValue", "Description", "ExportName"]
+        for output in stack.get("Outputs", []):
+            self.outputs_table.add_row(*(output.get(field, "") for field in fields))
+
+        fields = ["Key", "Value"]
+        for tag in stack.get("Tags", []):
+            self.tags_table.add_row(*(tag.get(field, "") for field in fields))
+
+        self.query_one(Pretty).update(stacks_description)
