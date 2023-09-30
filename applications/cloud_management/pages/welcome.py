@@ -56,6 +56,8 @@ class Help(Static):
 class Welcome(Static):
     DEFAULT_CSS = WELCOME_DEFAULT_CSS
 
+    VERIFY_PROFILES = False
+
     class ServicePathChanged(Message):
         def __init__(self, service_path: ServicePath) -> None:
             self.service_path = service_path
@@ -106,15 +108,15 @@ class Welcome(Static):
         profiles = session.available_profiles
         items = []
         for profile in profiles:
-            session = boto3.Session(profile_name=profile)
             disabled = False
             response = {}
-            try:
-                sts = session.client("sts")
-                response = sts.get_caller_identity()
-            except BotoCoreError:
-                disabled = True
-
+            if self.VERIFY_PROFILES:
+                session = boto3.Session(profile_name=profile)
+                try:
+                    sts = session.client("sts")
+                    response = sts.get_caller_identity()
+                except BotoCoreError:
+                    disabled = True
             items.append(SearchableList.ItemDatum(title=profile, id=profile, disabled=disabled, user_data=response))
 
         return items
