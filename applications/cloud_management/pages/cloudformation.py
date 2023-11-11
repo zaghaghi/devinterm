@@ -110,6 +110,9 @@ class CloudFormation(Static):
                     with TabPane("Events", id="events", classes="stack-tab-pane"):
                         yield Label("Events")
                     with TabPane("Resources", id="resources", classes="stack-tab-pane"):
+                        self.resources_table = DataTable(name="Resources", id="resources-table")
+                        self.resources_table.add_columns("Logical Id", "Physical Id", "Type", "Status")
+                        yield self.resources_table
                         yield Label("Resources")
                     with TabPane("Response", id="response", classes="stack-tab-pane"):
                         yield Pretty({})
@@ -155,6 +158,15 @@ class CloudFormation(Static):
             self.notify("Can't get stack information", severity="error")
             return {}
 
+    @work(exclusive=True, thread=True)
+    def list_stack_resources(self, stack_id: str) -> dict[str, Any]:
+        try:
+            response = self._client.list_stack_resources(StackName=stack_id)
+            return response
+        except Exception:
+            self.notify("Can't get stack resource list", severity="error")
+            return {}
+
     def update_option_list(self, stack_summaries: dict[str, Any]) -> None:
         self._option_list.clear_options()
         options = []
@@ -172,13 +184,15 @@ class CloudFormation(Static):
         if not isinstance(message.option, StackOption):
             return
         stack_desc = await self.describe_stacks(message.option.stack_id).wait()
-        self.update_stack_details(stack_desc)
+        stack_resources = await self.list_stack_resources(message.option.stack_id).wait()
+        self.update_stack_details(stack_desc, stack_resources)
 
-    def update_stack_details(self, stacks_description: dict[str, Any]) -> None:
+    def update_stack_details(self, stacks_description: dict[str, Any], stack_resources: dict[str, Any]) -> None:
         self.properties_table.clear()
         self.parameters_table.clear()
         self.outputs_table.clear()
         self.tags_table.clear()
+        self.resources_table.clear()
 
         stacks = stacks_description.get("Stacks")
         if not stacks:
@@ -200,4 +214,7 @@ class CloudFormation(Static):
         for tag in stack.get("Tags", []):
             self.tags_table.add_row(*(tag.get(field, "") for field in fields))
 
+        fields = ["LogicalResourceId", "PhysicalResourceId", "ResourceType", "ResourceStatus"]
+        for resource in stack_resources.get("StackResourceSummaries", []):
+            self.resources_table.add_row(*(resource.get(field, "") for field in fields))
         self.query_one(Pretty).update(stacks_description)
